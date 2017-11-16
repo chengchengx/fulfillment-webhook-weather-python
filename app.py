@@ -28,6 +28,7 @@ import os
 from flask import Flask
 from flask import request
 from flask import make_response
+import pbd
 
 # Flask app should start in global layout
 app = Flask(__name__)
@@ -50,6 +51,7 @@ def webhook():
 
 
 def processRequest(req):
+    pdb.set_trace()
     if req.get("result").get("action") != "yahooWeatherForecast":
         return {}
     baseurl = "https://query.yahooapis.com/v1/public/yql?"
