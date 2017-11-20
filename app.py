@@ -36,104 +36,154 @@ app = Flask(__name__)
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    req = request.get_json(silent=True, force=True)
+	# pdb.set_trace()
+	req = request.get_json(silent=True, force=True)
+	# req = request.get_json(force=True)
 
-    print("Request:")
-    print(json.dumps(req, indent=4))
+	print("Request:")
+	print(json.dumps(req, indent=4))
 
-    res = processRequest(req)
+	res = processRequest_health(req)
 
-    res = json.dumps(res, indent=4)
-    # print(res)
-    r = make_response(res)
-    r.headers['Content-Type'] = 'application/json'
-    return r
+	res = json.dumps(res, indent=4)
+	# print(res)
+	r = make_response(res)
+	r.headers['Content-Type'] = 'application/json'
+	return r
+
+def processRequest_health(req):
+	# import pdb; pdb.set_trace()
+	# if req.get("result").get("action") == "yahooWeatherForecast":
+	#     baseurl = "https://query.yahooapis.com/v1/public/yql?"
+	#     yql_query = makeYqlQuery(req)
+	#     if yql_query is None:
+	#         return {}
+	#     yql_url = baseurl + urlencode({'q': yql_query}) + "&format=json"
+	#     result = urlopen(yql_url).read()
+	#     data = json.loads(result)
+	#     res = makeWebhookResult(data)
 
 
-def processRequest(req):
-    # import pdb; pdb.set_trace()
-    if req.get("result").get("action") == "yahooWeatherForecast":
-        baseurl = "https://query.yahooapis.com/v1/public/yql?"
-        yql_query = makeYqlQuery(req)
-        if yql_query is None:
-            return {}
-        yql_url = baseurl + urlencode({'q': yql_query}) + "&format=json"
-        result = urlopen(yql_url).read()
-        data = json.loads(result)
-        res = makeWebhookResult(data)
-    elif req.get("result").get("action") == "weather-request":
-        res = {
-            "messages": [
-                {
-                    "type": 2,
-                    "platform": "slack",
-                    "title": "Please choose a City:",
-                    "replies": [
-                        "San Francisco",
-                        "Chicago",
-                        "New York"
-                    ]
-                }
-            ]
-        }
-    else:
-        res = {}
-    return res
+	# when user firstly interact with bot, we provide 3 options below
+	if req.get("result").get("action") == "wecome-user":
+		res = {
+			"messages": [
+				{
+					"type": 2,
+					"platform": "slack",
+					"title": "How can I help you?",
+					"replies": [
+						"Log Activity",
+						"Log Nutrition",
+						"Get in touch with the care team"
+					]
+				}
+			]
+		}
+
+	# user selects "Get in touch with the care team" button
+	elif req.get("result").get("action") == "contact-team":
+		res = {"speech": "Some team member will contact you later."}
+
+	# user selects "Log Activity" button
+	elif req.get("result").get("action") == "log-activity":
+		res = {"speech": "I have logged your activity !!"}
+
+	# user selects "Log Nutrition" button
+	elif req.get("result").get("action") == "log-nutrition":
+		res = {"speech": "I have logged your nutrition!!"}
+
+	else: 
+		res = {}
+		
+	return res
+
+# def processRequest(req):
+#     # import pdb; pdb.set_trace()
+#     if req.get("result").get("action") == "yahooWeatherForecast":
+#         baseurl = "https://query.yahooapis.com/v1/public/yql?"
+#         yql_query = makeYqlQuery(req)
+#         if yql_query is None:
+#             return {}
+#         yql_url = baseurl + urlencode({'q': yql_query}) + "&format=json"
+#         result = urlopen(yql_url).read()
+#         data = json.loads(result)
+#         res = makeWebhookResult(data)
+#     elif req.get("result").get("action") == "weather-request":
+#         res = {
+#             "messages": [
+#                 {
+#                     "type": 2,
+#                     "platform": "slack",
+#                     "title": "Please choose a City:",
+#                     "replies": [
+#                         "San Francisco",
+#                         "Chicago",
+#                         "New York"
+#                     ]
+#                 }
+#             ]
+#         }
+#     else:
+#         res = {}
+#     return res
+
+
 
 
 def makeYqlQuery(req):
-    result = req.get("result")
-    parameters = result.get("parameters")
-    city = parameters.get("geo-city")
-    if city is None:
-        return None
+	result = req.get("result")
+	parameters = result.get("parameters")
+	city = parameters.get("geo-city")
+	if city is None:
+		return None
 
-    return "select * from weather.forecast where woeid in (select woeid from geo.places(1) where text='" + city + "')"
+	return "select * from weather.forecast where woeid in (select woeid from geo.places(1) where text='" + city + "')"
 
 
 def makeWebhookResult(data):
-    query = data.get('query')
-    if query is None:
-        return {}
+	query = data.get('query')
+	if query is None:
+		return {}
 
-    result = query.get('results')
-    if result is None:
-        return {}
+	result = query.get('results')
+	if result is None:
+		return {}
 
-    channel = result.get('channel')
-    if channel is None:
-        return {}
+	channel = result.get('channel')
+	if channel is None:
+		return {}
 
-    item = channel.get('item')
-    location = channel.get('location')
-    units = channel.get('units')
-    if (location is None) or (item is None) or (units is None):
-        return {}
+	item = channel.get('item')
+	location = channel.get('location')
+	units = channel.get('units')
+	if (location is None) or (item is None) or (units is None):
+		return {}
 
-    condition = item.get('condition')
-    if condition is None:
-        return {}
+	condition = item.get('condition')
+	if condition is None:
+		return {}
 
-    # print(json.dumps(item, indent=4))
+	# print(json.dumps(item, indent=4))
 
-    speech = "Today the weather in " + location.get('city') + ": " + condition.get('text') + \
-             ", And the temperature is " + condition.get('temp') + " " + units.get('temperature')
+	speech = "Today the weather in " + location.get('city') + ": " + condition.get('text') + \
+			 ", And the temperature is " + condition.get('temp') + " " + units.get('temperature')
 
-    print("Response:")
-    print(speech)
+	print("Response:")
+	print(speech)
 
-    return {
-        "speech": speech,
-        "displayText": speech,
-        # "data": data,
-        # "contextOut": [],
-        "source": "apiai-weather-webhook-sample"
-    }
+	return {
+		"speech": speech,
+		"displayText": speech,
+		# "data": data,
+		# "contextOut": [],
+		"source": "apiai-weather-webhook-sample"
+	}
 
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 5000))
+	port = int(os.getenv('PORT', 5000))
 
-    print("Starting app on port %d" % port)
+	print("Starting app on port %d" % port)
 
-    app.run(debug=True, port=port, host='0.0.0.0')
+	app.run(debug=True, port=port, host='0.0.0.0')
