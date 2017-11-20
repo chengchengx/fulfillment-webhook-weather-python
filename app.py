@@ -51,17 +51,33 @@ def webhook():
 
 
 def processRequest(req):
-    import pdb; pdb.set_trace()
-    if req.get("result").get("action") != "yahooWeatherForecast":
-        return {}
-    baseurl = "https://query.yahooapis.com/v1/public/yql?"
-    yql_query = makeYqlQuery(req)
-    if yql_query is None:
-        return {}
-    yql_url = baseurl + urlencode({'q': yql_query}) + "&format=json"
-    result = urlopen(yql_url).read()
-    data = json.loads(result)
-    res = makeWebhookResult(data)
+    # import pdb; pdb.set_trace()
+    if req.get("result").get("action") == "yahooWeatherForecast":
+        baseurl = "https://query.yahooapis.com/v1/public/yql?"
+        yql_query = makeYqlQuery(req)
+        if yql_query is None:
+            return {}
+        yql_url = baseurl + urlencode({'q': yql_query}) + "&format=json"
+        result = urlopen(yql_url).read()
+        data = json.loads(result)
+        res = makeWebhookResult(data)
+    elif req.get("result").get("action") == "weather-request":
+        res = {
+            "messages": [
+                {
+                    "type": 2,
+                    "platform": "slack",
+                    "title": "Please choose a City:",
+                    "replies": [
+                        "San Francisco",
+                        "Chicago",
+                        "New York"
+                    ]
+                }
+            ]
+        }
+    else:
+        res = {}
     return res
 
 
