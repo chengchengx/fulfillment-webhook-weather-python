@@ -38,7 +38,6 @@ app = Flask(__name__)
 def webhook():
 	# pdb.set_trace()
 	req = request.get_json(silent=True, force=True)
-	# req = request.get_json(force=True)
 
 	print("Request:")
 	print(json.dumps(req, indent=4))
@@ -46,26 +45,16 @@ def webhook():
 	res = processRequest_health(req)
 
 	res = json.dumps(res, indent=4)
-	# print(res)
+	
 	r = make_response(res)
 	r.headers['Content-Type'] = 'application/json'
 	return r
 
 def processRequest_health(req):
-	# import pdb; pdb.set_trace()
-	# if req.get("result").get("action") == "yahooWeatherForecast":
-	#     baseurl = "https://query.yahooapis.com/v1/public/yql?"
-	#     yql_query = makeYqlQuery(req)
-	#     if yql_query is None:
-	#         return {}
-	#     yql_url = baseurl + urlencode({'q': yql_query}) + "&format=json"
-	#     result = urlopen(yql_url).read()
-	#     data = json.loads(result)
-	#     res = makeWebhookResult(data)
-
 
 	# when user firstly interact with bot, we provide 3 options below
 	if req.get("result").get("action") == "wecome-user":
+
 		res = {
 			"messages": [
 				{
@@ -80,22 +69,16 @@ def processRequest_health(req):
 				}
 			]
 		}
-
-	# user selects "Get in touch with the care team" button
-	elif req.get("result").get("action") == "contact-team":
-		res = {"speech": "Some team member will contact you later."}
-
-	# user selects "Log Activity" button
-	elif req.get("result").get("action") == "log-activity":
-		res = {"speech": "I have logged your activity !!"}
-
-	# user selects "Log Nutrition" button
-	elif req.get("result").get("action") == "log-nutrition":
-		res = {"speech": "I have logged your nutrition!!"}
-
+	# Test : trigger intent by sending event
+	elif req.get("result").get("action") == "trigger-intent":
+		res = {
+			"followupEvent": {
+				"name": "intent_trigger_event"
+			}
+		}
 	else: 
 		res = {}
-		
+
 	return res
 
 # def processRequest(req):
@@ -127,8 +110,6 @@ def processRequest_health(req):
 #     else:
 #         res = {}
 #     return res
-
-
 
 
 def makeYqlQuery(req):
